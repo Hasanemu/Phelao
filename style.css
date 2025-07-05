@@ -184,6 +184,7 @@ a:hover {
     min-height: var(--header-height);
     display: flex;
     align-items: center;
+    position: relative; /* Crucial for absolute positioning of dropdown */
 }
 
 .main-header .container {
@@ -209,7 +210,12 @@ a:hover {
     color: var(--secondary-brand);
 }
 
-.main-nav .nav-links {
+/* Main Nav (desktop only, though now it's effectively hidden by breakpoint) */
+.main-nav {
+    display: none; /* Hide traditional main nav */
+}
+
+.main-nav .nav-links { /* These rules will not apply due to display:none above */
     list-style: none;
     display: flex;
     gap: 30px; /* Generous spacing */
@@ -260,110 +266,113 @@ a:hover {
     gap: 15px;
 }
 
-/* Hamburger Menu */
+/* Hamburger Menu - ALWAYS VISIBLE */
 .hamburger-menu {
-    display: none;
+    display: block; /* ENSURES it's always visible */
     background: none;
     border: none;
     font-size: 1.8em; /* Adjusted size */
     color: var(--primary-brand);
     cursor: pointer;
     transition: color var(--transition-speed);
+    padding: 0.5rem; /* Added padding for easier clicking */
+    z-index: 1001; /* Ensure it's on top */
 }
 
 .hamburger-menu:hover {
     color: var(--secondary-brand);
 }
 
-/* Mobile Menu Overlay */
+/* Mobile Menu Overlay (Now Universal Dropdown Panel) */
 .mobile-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    z-index: 1001;
-    display: flex;
-    justify-content: flex-end; /* Align to right for slide-in effect */
-    align-items: flex-start; /* Align to top */
-    opacity: 0;
+    position: fixed; /* Always fixed relative to viewport for precise JS positioning */
+    z-index: 1002; /* Higher than header for overlay */
+
+    /* Initial hidden state */
     visibility: hidden;
-    transition: opacity var(--transition-speed), visibility var(--transition-speed);
+    opacity: 0;
+    transform: scaleY(0.95); /* Slight scale down for pop effect */
+    transform-origin: top right; /* Origin for scaling from hamburger */
+    transition: opacity var(--transition-speed), transform var(--transition-speed), visibility var(--transition-speed);
+
+    /* Appearance of the dropdown panel itself */
+    background-color: var(--light-background);
+    border-radius: var(--border-radius-soft);
+    box-shadow: 0 8px 30px var(--shadow-deep); /* Stronger shadow for pop-out effect */
+    border: 1px solid var(--light-border);
+    padding: 25px; /* Generous padding inside the panel */
+
+    /* Default size for desktop, will adjust for mobile */
+    width: 280px; /* Default desktop dropdown width */
+    max-height: 80vh; /* Max height to allow scrolling */
+    overflow-y: auto; /* Enable scrolling for long menus */
 }
 
 .mobile-menu-overlay.active {
     opacity: 1;
     visibility: visible;
+    transform: scaleY(1); /* Pop down effect */
 }
 
-.mobile-menu-content {
-    background-color: var(--light-background);
-    padding: 60px 30px 30px; /* More padding at top for close button */
-    border-radius: var(--border-radius-soft);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-    position: relative;
-    width: 80%; /* Wider for better content display */
-    max-width: 380px; /* Slightly wider */
-    height: 100%; /* Take full height */
-    overflow-y: auto; /* Scroll if content overflows */
-    transform: translateX(100%); /* Slide in from right */
-    opacity: 0;
-    transition: transform var(--transition-speed) ease-out, opacity var(--transition-speed) ease-out, background-color var(--transition-speed);
-}
-
-.mobile-menu-overlay.active .mobile-menu-content {
-    transform: translateX(0);
-    opacity: 1;
-}
-
+/* Close Button (Always visible inside menu panel) */
 .close-menu {
+    display: block; /* Always visible */
     position: absolute;
-    top: 20px;
-    right: 25px;
+    top: 15px;
+    right: 15px;
     background: none;
     border: none;
-    font-size: 2.2em; /* Adjusted size */
+    font-size: 2em;
     color: var(--light-secondary-text);
     cursor: pointer;
-    transition: color var(--transition-speed);
+    transition: color var(--transition-speed), transform 0.2s ease;
 }
 
 .close-menu:hover {
     color: var(--primary-brand);
+    transform: rotate(90deg); /* Creative touch */
 }
 
+/* Navigation Links within the menu */
 .mobile-nav-links {
     list-style: none;
-    margin-top: 20px; /* Space below close button */
+    margin-top: 30px; /* Space from close button */
+    padding: 0;
 }
 
 .mobile-nav-links li {
-    margin-bottom: 20px; /* More spacing */
+    margin-bottom: 15px; /* Spacing between links */
 }
 
 .mobile-nav-links li a {
     color: var(--light-text);
-    font-size: 1.3em; /* Larger mobile nav links */
-    font-weight: 600;
+    font-size: 1.15em; /* Consistent font size for dropdown links */
+    font-weight: 500;
     display: block;
     padding: 10px 0;
-    transition: color var(--transition-speed);
-    border-bottom: 1px solid var(--light-border); /* Subtle separator */
+    transition: color var(--transition-speed), transform 0.2s ease;
+    border-bottom: 1px solid var(--light-border);
+    text-align: left; /* Always align text left */
 }
 
 .mobile-nav-links li:last-child a {
-    border-bottom: none; /* No border for last item */
+    border-bottom: none;
 }
 
 .mobile-nav-links li a:hover {
     color: var(--primary-brand);
-    text-decoration: none;
+    transform: translateX(5px);
 }
 
-.mobile-only {
-    display: none;
+
+/* Utility classes for display based on breakpoint (unrelated to menu now) */
+.desktop-only {
+    display: block; /* Default to block, hidden on smaller screens */
 }
+.mobile-only {
+    display: none; /* Default to hidden, shown on smaller screens */
+}
+
 
 /* Sections Spacing */
 .section-spacing {
@@ -544,7 +553,7 @@ a:hover {
     margin-top: 100px; /* Space from articles */
     background-color: var(--light-background);
     padding: 60px 0;
-    text-align: center;
+    text-align: center; /* Keep this for overall section centering, but we'll override for intro text */
 }
 
 .statistics-showcase h3 {
@@ -557,6 +566,9 @@ a:hover {
     color: var(--light-secondary-text);
     margin-bottom: 3.5em;
     max-width: 700px;
+    margin-left: auto; /* ADD THIS LINE */
+    margin-right: auto; /* ADD THIS LINE */
+    text-align: center; /* Ensure the text itself is centered within its limited width */
 }
 
 .stat-grid {
@@ -961,10 +973,9 @@ a:hover {
 }
 
 @media (max-width: 992px) {
-    .desktop-only { display: none !important; }
-    .main-nav { display: none; }
-    .hamburger-menu { display: block; }
-    .mobile-only { display: inline-block; }
+    .desktop-only { display: none !important; } /* Hide desktop-only elements on smaller screens */
+    .main-nav { display: none; } /* Hide traditional main nav on smaller screens */
+    .mobile-only { display: inline-block; } /* Show mobile-only elements on smaller screens */
 
     .main-header .container {
         padding: 0 20px;
@@ -1067,16 +1078,33 @@ a:hover {
         min-height: 120px;
     }
 
-    .mobile-menu-content {
-        padding: 50px 25px 25px;
-        width: 85%;
-        max-width: 350px;
+    /* Mobile-specific adjustments for the dropdown panel */
+    .mobile-menu-overlay {
+        width: 90vw; /* Make it wider on mobile, percentage of viewport width */
+        max-width: 350px; /* Max width */
+        padding: 25px; /* Consistent padding */
+        /* JS will handle top/right, so no need for absolute centering here */
     }
-    .mobile-nav-links li a {
-        font-size: 1.2em;
-    }
+
     .close-menu {
-        font-size: 2em;
+        font-size: 2.2em; /* Slightly larger close on mobile */
+        top: 15px; /* Consistent top/right positioning */
+        right: 15px;
+    }
+
+    .mobile-nav-links {
+        margin-top: 30px; /* Space from close button */
+    }
+
+    .mobile-nav-links li a {
+        font-size: 1.15em; /* Consistent font size */
+        padding: 10px 0; /* Consistent padding */
+        text-align: left; /* Consistent alignment */
+    }
+
+    .footer-bottom {
+        margin-top: 30px;
+        padding-top: 20px;
     }
 
     .main-footer .container {
@@ -1085,9 +1113,9 @@ a:hover {
         text-align: center; /* Center footer content */
     }
     .footer-cta, .footer-social-connect, .footer-nav, .footer-bottom {
-    grid-column: 1 / -1; /* Span full width */
-    padding-right: 0;
-    text-align: center; /* Ensure text is centered for stacked layout */
+        grid-column: 1 / -1; /* Span full width */
+        padding-right: 0;
+        text-align: center; /* Ensure text is centered for stacked layout */
     }
     .footer-buttons {
         justify-content: center; /* Center buttons */
@@ -1125,78 +1153,27 @@ a:hover {
     }
     .hero-content p {
         font-size: 1em;
-        margin-bottom: 2em;
-    }
-    .button {
-        padding: 10px 20px;
-        font-size: 0.9em;
-    }
-    .share-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.4em;
-    }
-
-    .section-spacing {
-        padding: 50px 0;
     }
     .section-title {
         font-size: 1.8em;
-        margin-bottom: 1.8em;
-    }
-    .section-intro {
-        font-size: 0.95em;
-        margin-bottom: 2em;
-    }
-    .article-section-wrapper {
-        gap: 40px;
     }
     .info-article {
         padding: 25px;
-        gap: 25px;
     }
     .article-image-container img {
         height: 200px;
     }
-    .info-article h4 {
-        font-size: 1.25em;
-    }
-    .info-article p {
-        font-size: 0.9em;
-    }
-    .statistics-showcase {
-        margin-top: 60px;
-        padding: 40px 0;
-    }
-    .statistics-showcase h3 {
-        font-size: 1.8em;
+    .stat-grid {
+        grid-template-columns: 1fr; /* Single column on very small screens */
     }
     .stat-card {
         padding: 25px;
     }
-    .stat-card .icon-large {
-        font-size: 2.5em;
-    }
-    .stat-card h4 {
-        font-size: 1.5em;
-    }
     .forum-form-container, .suggestion-form-container {
         padding: 25px;
     }
-    #anonymousQueryForm textarea, #topicSuggestionForm textarea {
-        min-height: 100px;
-        padding: 15px;
-    }
-    .mobile-menu-content {
-        padding: 40px 20px 20px;
-        width: 90%;
-    }
-    .mobile-nav-links li a {
-        font-size: 1.1em;
-        padding: 8px 0;
-    }
-    .close-menu {
-        font-size: 1.8em;
+    .main-footer .container {
+        gap: 30px;
     }
     .footer-cta h3 {
         font-size: 1.8em;
@@ -1204,19 +1181,22 @@ a:hover {
     .footer-cta p {
         font-size: 0.9em;
     }
-    .footer-social-connect h4, .footer-nav h4 {
-        font-size: 1.2em;
+    .footer-buttons {
+        gap: 10px;
+    }
+    .footer-button {
+        padding: 10px 20px;
+        font-size: 0.85em;
     }
     .social-icons-large a {
         width: 40px;
         height: 40px;
         font-size: 1.4em;
     }
-    .footer-nav ul {
-        flex-direction: column;
-        gap: 10px;
+    .footer-nav ul li a {
+        font-size: 0.9em;
     }
     .footer-bottom p {
-        font-size: 0.8em;
+        font-size: 0.75em;
     }
 }
