@@ -2,7 +2,8 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Smooth scrolling for navigation links ---
-    document.querySelectorAll('nav a, .mobile-nav-links a, .footer-nav a, .footer-buttons a').forEach(anchor => {
+    // Combined selector for all navigation links across desktop dropdown, mobile overlay, and footer
+    document.querySelectorAll('.mobile-nav-links a, .footer-nav a, .footer-buttons a').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
 
@@ -30,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         behavior: 'smooth'
                     });
 
-                    // Close mobile menu if open
-                    if (mobileMenuOverlay.classList.contains('active')) {
-                        mobileMenuOverlay.classList.remove('active');
-                        document.body.style.overflow = ''; // Re-enable scrolling
+                    // Close any active menu (mobile overlay or desktop dropdown)
+                    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+                    if (mobileMenuOverlay && mobileMenuOverlay.classList.contains('active')) {
+                        toggleMenu(); // Call toggleMenu to close it cleanly
                     }
                 }
             } else {
@@ -45,27 +46,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Mobile Navigation (Hamburger Menu) ---
     const hamburgerMenu = document.getElementById('hamburgerMenu');
-    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay'); // This is now the actual menu panel
     const closeMenu = document.getElementById('closeMenu');
-    const body = document.body; // Reference to the body for overflow control
+    const body = document.body;
+    const transitionDuration = parseFloat(getComputedStyle(mobileMenuOverlay).transitionDuration) * 1000; // Get transition duration in ms
 
-    hamburgerMenu.addEventListener('click', () => {
-        mobileMenuOverlay.classList.add('active');
-        body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
-    });
+    // Function to toggle menu visibility and body scroll, and position it
+    function toggleMenu() {
+        if (!mobileMenuOverlay.classList.contains('active')) {
+            // Opening the menu
+            const hamburgerRect = hamburgerMenu.getBoundingClientRect();
 
-    closeMenu.addEventListener('click', () => {
-        mobileMenuOverlay.classList.remove('active');
-        body.style.overflow = ''; // Re-enable scrolling
-    });
+            // Calculate position: directly underneath hamburger, aligned to its right edge
+            // `window.scrollY` is added because `getBoundingClientRect().top` is relative to viewport
+            // and we're setting `position: fixed` which is relative to viewport.
+            // A small offset (e.g., 10px) is added for visual spacing.
+            const topPosition = hamburgerRect.bottom + 10;
+            const rightPosition = window.innerWidth - hamburgerRect.right;
 
-    // Close menu if clicking outside the content (good UX)
-    mobileMenuOverlay.addEventListener('click', (e) => {
-        if (e.target === mobileMenuOverlay) {
+            mobileMenuOverlay.style.top = `${topPosition}px`;
+            mobileMenuOverlay.style.right = `${rightPosition}px`;
+            
+            mobileMenuOverlay.classList.add('active');
+            body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+
+        } else {
+            // Closing the menu
             mobileMenuOverlay.classList.remove('active');
-            body.style.overflow = '';
+            body.style.overflow = ''; // Re-enable scrolling
+
+            // Clear inline styles after transition to allow CSS to manage layout
+            setTimeout(() => {
+                if (!mobileMenuOverlay.classList.contains('active')) { // Only clear if still inactive
+                    mobileMenuOverlay.style.top = '';
+                    mobileMenuOverlay.style.right = '';
+                }
+            }, transitionDuration); // Match CSS transition duration for smooth reset
         }
+    }
+
+    // Event listeners for hamburger and close buttons
+    if (hamburgerMenu) {
+        hamburgerMenu.addEventListener('click', toggleMenu);
+    }
+
+    if (closeMenu) {
+        closeMenu.addEventListener('click', toggleMenu);
+    }
+
+    // Close menu if clicking outside the dropdown panel
+    if (mobileMenuOverlay) {
+        document.addEventListener('click', (e) => {
+            // If the menu is active AND the click is outside both the hamburger and the menu overlay itself
+            if (mobileMenuOverlay.classList.contains('active') && 
+                !mobileMenuOverlay.contains(e.target) && 
+                !hamburgerMenu.contains(e.target)) {
+                toggleMenu();
+            }
+        });
+    }
+
+    // Recalculate menu position on resize if it's open
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (mobileMenuOverlay.classList.contains('active')) {
+                // Close and reopen to re-calculate position
+                toggleMenu(); 
+                toggleMenu(); 
+            }
+        }, 200); // Debounce resize event
     });
+
 
     // --- Formspree Submission (Anonymous Query) ---
     const anonymousQueryForm = document.getElementById('anonymousQueryForm');
@@ -181,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 suggestionStatus.textContent = 'Please enter your topic suggestion.';
                 suggestionStatus.style.color = 'var(--tertiary-accent)';
                 setTimeout(() => {
-                    queryStatus.textContent = '';
+                    suggestionStatus.textContent = '';
                 }, 3000);
             }
         });
@@ -235,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert('To share on Instagram, please copy the link and paste it into your story or post: ' + shareUrl);
                         break;
                     case 'linkedin':
-                        url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&summary=${encodeURIComponent(shareText)}`;
+                        url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}` + (shareText ? `&summary=${encodeURIComponent(shareText)}` : ''); // Added summary conditionally
                         break;
                     default:
                         alert('Sharing not supported for this platform or your browser.');
