@@ -1200,3 +1200,9 @@ a:hover {
         font-size: 0.75em;
     }
 }
+@media (max-width: 600px) {
+    .hamburger-menu {
+        display: none !important;
+    }
+}
+
